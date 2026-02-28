@@ -1,0 +1,26 @@
+DIAGNÓSTICO Y DEPLOY (v2.2.0)
+
+Objetivo: evitar mezcla de archivos en GitHub Pages.
+
+1) En el repo, asegúrate que en la RAÍZ existan:
+   - index.html
+   - app.js
+   - style.css
+   - VERSION.txt
+   - carpeta data/ (incluye base_data.json)
+   - carpeta assets/
+
+2) Pruebas rápidas (deben abrir, NO 404):
+   /VERSION.txt
+   /data/base_data.json
+   /assets/dominican-republic.svg
+   /app.js?v=220
+   /style.css?v=220
+
+3) Si el simulador se ve pero no funciona:
+   - casi siempre es mezcla/caché.
+   - cambia el número de v=220 en index.html (por ejemplo v=221) y vuelve a subir SOLO index.html.
+
+4) GitHub Pages:
+   Settings > Pages > Deploy from a branch > main > /(root)
+

@@ -1,0 +1,20 @@
+[
+  {
+    "encuestadora": "JCE Oficial 2024 (baseline)",
+    "candidato": "—",
+    "partido": "—",
+    "fecha": "2024-05-19",
+    "margen_error": 0,
+    "year": 2024,
+    "pollParty": {
+      "FP": 26.7,
+      "PRM": 48.47,
+      "PLD": 10.4,
+      "OTROS": 14.42
+    },
+    "pollWeights": {
+      "cand": 0,
+      "party": 1
+    }
+  }
+]
