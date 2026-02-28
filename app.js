@@ -1459,28 +1459,30 @@ function bindUI(){
   document.querySelectorAll("[data-go]").forEach(btn=>{
     btn.addEventListener("click", ()=> goView(btn.getAttribute("data-go")));
   });
-  document.getElementById("btnHome").addEventListener("click", ()=>goView("home"));
+  const btnHome = document.getElementById("btnHome");
+  if(btnHome) btnHome.addEventListener("click", ()=>goView("home"));
 
   // Controls
+  try{ // Controls safe
   const yearBase = document.getElementById("yearBase");
-  yearBase.addEventListener("change", ()=>{
+  if(yearBase) yearBase.addEventListener("change", ()=>{
     state.year = +yearBase.value;
     renderLevelTables();
   });
 
   const scenario = document.getElementById("scenario");
-  scenario.addEventListener("change", ()=>{
+  if(scenario) scenario.addEventListener("change", ()=>{
     state.scenario = scenario.value;
     // apply simple presets to swings and alliance transfer
     if(state.scenario==="optimista"){
       state.allianceTransfer = 90;
-      document.getElementById("allianceTransfer").value = 90;
+      { const _at = document.getElementById("allianceTransfer"); if(_at) _at.value = 90; }
     }else if(state.scenario==="conservador"){
       state.allianceTransfer = 75;
-      document.getElementById("allianceTransfer").value = 75;
+      { const _at = document.getElementById("allianceTransfer"); if(_at) _at.value = 75; }
     }else if(state.scenario==="moderado"){
       state.allianceTransfer = 85;
-      document.getElementById("allianceTransfer").value = 85;
+      { const _at = document.getElementById("allianceTransfer"); if(_at) _at.value = 85; }
     }
     document.getElementById("allianceTransferVal").textContent = String(state.allianceTransfer);
     document.getElementById("cardTransfer").textContent = String(state.allianceTransfer);
@@ -1961,6 +1963,7 @@ async function mountMap(){
 }
 
 (async function init(){
+  try{
   await loadBase();
   loadSeatsPrefs();
   state.teamPolls = await loadTeamPolls();
@@ -1969,4 +1972,9 @@ async function mountMap(){
   bindIETabs();
   // default view
   goView("home");
+  if(window.__setDiag) window.__setDiag('<b>OK</b>: '+APP_VERSION);
+  } catch(e){
+    try{ if(window.__setDiag) window.__setDiag('<b>ERROR INIT</b>: '+(e.message||e)); }catch(_){ }
+    console.error(e);
+  }
 })();

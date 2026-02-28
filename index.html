@@ -1,472 +1,412 @@
-<!doc
-              <div class="hint" style="margin-top:8px">
-                <b>Guía rápida:</b> 1) Llena la encuesta simple y pulsa <b>Aplicar</b>. 2) Si quieres compartirla, pulsa <b>Guardar para equipo</b> y sube el archivo a GitHub. 3) Usa <b>Comparar alianza</b> y revisa rankings.
-              </div>
-
-              <div class="controls" style="margin-top:10px">
-                <label class="ctl">
-                  <span class="ctl__label">Ranking estratégico</span>
-                  <select id="rankMode">
-                    <option value="opp_mun">Municipios oportunidad (bajo arrastre)</option>
-                    <option value="pivot_mun">Municipios pivote (carrera cerrada)</option>
-                    <option value="pivot_dip">Circ. diputados pivote (1 escaño)</option>
-                    <option value="alliance_flip">Territorios donde la alianza cambia el ganador</option>
-                  </select>
-                </label>
-                <label class="ctl">
-                  <span class="ctl__label">Umbral pivote (pp)</span>
-                  <input id="pivotThreshold" type="number" min="0" max="10" step="0.1" value="2.0"/>
-                </label>
-                <button class="btn" id="btnExportRanking" type="button">Exportar ranking (CSV)</button>
-              </div>
-
-              <div class="controls" style="margin-top:6px">
-                <button class="btn" id="btnCompareAlliance" type="button">Comparar: Sin alianza vs Con alianza</button>
-                <div class="hint" id="cmpHint">Muestra diferencias en Presidencial, Diputados y Alcaldías con la configuración actual.</div>
-              </div>
-
-              
-<details class="uiFold" open>
-  <summary>Rankings y comparación de alianza</summary>
-  <div class="hint">Usa el selector para cambiar el ranking. El comparador mide el impacto de la alianza actual.</div>
-  <div class="panel__box" style="margin-top:10px">
-    <div class="panel__boxTitle">Ranking (Top 20)</div>
-    <table class="mini" id="tblRanking"></table>
-  </div>
-  <div class="panel__box" style="margin-top:14px; display:none" id="cmpBox">
-    <div class="panel__boxTitle">Comparación de alianza</div>
-    <div class="kv">
-      <div><span class="k">Presidencial (FP)</span><span class="v" id="cmpPres">—</span></div>
-      <div><span class="k">Diputados (escaños FP)</span><span class="v" id="cmpDip">—</span></div>
-      <div><span class="k">Alcaldías (ganadas FP)</span><span class="v" id="cmpAlc">—</span></div>
-    </div>
-    <div class="hint" id="cmpDetails">—</div>
-  </div>
-</details>
-
-                <div class="kv">
-                  <div><span class="k">Presidencial (FP)</span><span class="v" id="cmpPres">—</span></div>
-                  <div><span class="k">Diputados (escaños FP)</span><span class="v" id="cmpDip">—</span></div>
-                  <div><span class="k">Alcaldías (ganadas FP)</span><span class="v" id="cmpAlc">—</span></div>
-                </div>
-                <div class="hint" id="cmpDetails">—</div>
-              </div>
-type html>
+<!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Simulador Electoral FP 2028 — Dashboard</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>Inteligencia Electoral 2028 · Simulador FP</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=222"/>
 </head>
 <body>
-<header class="topbar">
-    <div class="brand">
-      <div class="brand__kicker">SIMULADOR</div>
-      <div class="brand__title">Electoral FP 2028</div>
+  
+<select id="yearBase" style="display:none"><option value="2024">2024</option><option value="2020">2020</option></select>
+<select id="scenario" style="display:none">
+<option value="moderado">Moderado</option>
+<option value="optimista">Optimista</option>
+<option value="adverso">Adverso</option>
+<option value="custom">Personalizado</option>
+</select>
+
+<div id="appLoader" class="appLoader"><div class="appLoader__box">Cargando datos…</div></div>
+
+  <!-- Header IE2028 -->
+  <header class="ieHeader">
+    <div class="ieHeader__left">
+      <div class="ieBrand">
+        <div class="ieBrand__mark">FP</div>
+        <div class="ieBrand__txt">
+          <div class="ieBrand__name">FUERZA DEL PUEBLO</div>
+          <div class="ieBrand__sub">Simulador Electoral 2028</div>
+        </div>
+      </div>
     </div>
 
-    <nav class="topnav">
-      <button class="navbtn is-active" data-view="home">Dashboard</button>
-      <button class="navbtn" data-view="pres">Presidencial</button>
-      <button class="navbtn" data-view="sen">Senadores</button>
-      <button class="navbtn" data-view="dip">Diputados</button>
-      <button class="navbtn" data-view="alc">Alcaldes</button>
-      <button class="navbtn navbtn--ghost btn secondary" id="btnExport">Exportar escenario</button>
-    </nav>
+    <div class="ieHeader__center">
+      <div class="ieTitle">INTELIGENCIA ELECTORAL 2028</div>
+      <div class="ieSubtitle">Comisión de Análisis, Formación y Tecnología · Plan Maestro</div>
+    </div>
+
+    <div class="ieHeader__right">
+      <div class="ieBadge">EJE<br><b>B</b></div>
+    </div>
   </header>
 
-  <main class="layout">
-    <aside class="panel">
-      <div class="panel__section">
-        <div class="panel__title">Configuración</div>
+  <!-- Top stats -->
+  <section class="ieStats">
+    <div class="stat">
+      <div class="stat__k">FP Nacional 2024</div>
+      <div class="stat__v" id="kpiFP">—</div>
+      <div class="stat__s" id="kpiFPsub">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat__k">PRM Nacional 2024</div>
+      <div class="stat__v" id="kpiPRM">—</div>
+      <div class="stat__s" id="kpiPRMsub">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat__k">PLD Nacional 2024</div>
+      <div class="stat__v" id="kpiPLD">—</div>
+      <div class="stat__s" id="kpiPLDsub">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat__k">Municipios analizados</div>
+      <div class="stat__v" id="kpiMuns">—</div>
+      <div class="stat__s">Datos JCE 2020–2024</div>
+    </div>
+    <div class="stat">
+      <div class="stat__k">Votos válidos 2024</div>
+      <div class="stat__v" id="kpiValid">—</div>
+      <div class="stat__s">Total nacional</div>
+    </div>
+  </section>
 
-        <label class="field">
-          <div class="field__label">Año base</div>
-          <select id="yearBase">
-            <option value="2024" selected>2024</option>
-            <option value="2020">2020</option>
-          </select>
-        </label>
+  <!-- IE Tabs -->
+  <nav class="ieTabs">
+    <button class="ieTab isActive" data-ie="b1">B.1 · Mapa Electoral</button>
+    <button class="ieTab" data-ie="b2">B.2 · Clasificador Municipal</button>
+    <button class="ieTab" data-ie="b3">B.3 · Abstención y Voto Potencial</button>
+    <div class="ieTabs__spacer"></div>
 
-        <label class="field">
-          <div class="field__label">Escenario</div>
-          <select id="scenario">
-            <option value="moderado" selected>Moderado</option>
-            <option value="optimista">Optimista</option>
-            <option value="conservador">Conservador</option>
-            <option value="custom">Personalizado</option>
-          </select>
-        </label>
+    <!-- Primary simulator navigation -->
+    <div class="ieNav">
+      <button class="navbtn isActive" data-view="dashboard">Dashboard</button>
+      <button class="navbtn" data-view="presidencial">Presidencial</button>
+      <button class="navbtn" data-view="senadores">Senadores</button>
+      <button class="navbtn" data-view="diputados">Diputados</button>
+      <button class="navbtn" data-view="alcaldes">Alcaldes</button>
+    </div>
 
-        <div class="hr"></div>
+    <button class="btn ghost" id="btnExportScenario" type="button">Exportar escenario</button>
+  </nav>
 
-        <div class="panel__subtitle">Alianzas</div>
+  <main class="ieMain">
+    <div id="dataAlerts" class="alertBar" style="display:none"></div>
 
-        <label class="field">
-          <div class="field__label">Tipo de alianza</div>
-          <select id="allianceType">
-            <option value="none" selected>Sin alianza</option>
-            <option value="fp_pld">FP + PLD</option>
-            <option value="fp_otros">FP + OTROS</option>
-            <option value="bloque_opositor">Bloque opositor (FP + OTROS)</option>
-          </select>
-        </label>
+    <button class="mobileMenuBtn" id="btnMobileMenu" type="button">☰ Menú</button>
 
-        <label class="field">
-          <div class="field__label">% transferencia a la boleta aliada (nacional)</div>
-          <input id="allianceTransfer" type="range" min="0" max="100" value="85" />
-          <div class="field__hint"><span id="allianceTransferVal">85</span>%</div>
-        </label>
+    <div class="layout">
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <div class="panel">
+          <div class="panel__title">Configuración</div>
 
-        <div class="hr"></div>
-
-        <div class="panel__subtitle">Encuestas (modo override)</div>
-
-        <label class="check">
-          <input type="checkbox" id="pollingEnabled" />
-          <span>Activar encuestas (ajusta el escenario base)</span>
-        </label>
-
-        
-        <div class="controls" style="margin-top:10px">
-          <div class="hint" style="margin-bottom:6px">Encuesta simple (solo 4 números): escribe % nacionales para FP/PRM/PLD/OTROS. Deben sumar 100.</div>
-          <label class="ctl"><span class="ctl__label">FP %</span><input id="pollFP" type="number" min="0" max="100" step="0.1" value="38"/></label>
-          <label class="ctl"><span class="ctl__label">PRM %</span><input id="pollPRM" type="number" min="0" max="100" step="0.1" value="45"/></label>
-          <label class="ctl"><span class="ctl__label">PLD %</span><input id="pollPLD" type="number" min="0" max="100" step="0.1" value="10"/></label>
-          <label class="ctl"><span class="ctl__label">OTROS %</span><input id="pollOTROS" type="number" min="0" max="100" step="0.1" value="7"/></label>
-        </div>
-
-        <div class="controls" style="margin-top:10px">
-          <label class="ctl"><span class="ctl__label">Candidato</span><input id="pollCandidato" type="text" placeholder="Ej: Leonel" /></label>
-          <label class="ctl"><span class="ctl__label">Partido</span>
-            <select id="pollPartido">
-              <option value="FP">FP</option>
-              <option value="PRM">PRM</option>
-              <option value="PLD">PLD</option>
+          <label class="field">
+            <div class="field__label">Año base</div>
+            <select id="year">
+              <option value="2024">2024</option>
+              <option value="2020">2020</option>
             </select>
           </label>
-          <label class="ctl"><span class="ctl__label">Margen error</span><input id="pollMOE" type="number" step="0.1" placeholder="Ej: 2.5" /></label>
-          <label class="ctl"><span class="ctl__label">Fecha</span><input id="pollFecha" type="date" /></label>
-          <label class="ctl"><span class="ctl__label">Encuestadora</span><input id="pollEncuestadora" type="text" placeholder="Ej: Markestrat" /></label>
-        </div>
 
-        <div class="controls" style="margin-top:6px">
-          <button class="btn" id="btnAplicarEncuestaSimple" class="btn" type="button">Aplicar encuesta</button>
-          <button class="btn" id="btnGuardarEncuestaEquipo" class="btn" type="button">Guardar para equipo (descargar encuestas.json)</button>
-          <div class="hint" id="pollSimpleHint">Tip: “Guardar para equipo” descarga un archivo. Súbelo a GitHub en data/encuestas.json.</div>
-          <div class="controls" style="margin-top:6px">
-            <button class="btn" id="btnAplicarMasReciente" class="btn" type="button">Aplicar encuesta más reciente (Equipo)</button>
-            <button class="btn" id="btnCompararEncuestas" class="btn" type="button">Comparar 2 encuestas (Equipo)</button>
-          </div>
-
-          
-<details class="uiFold" open>
-  <summary>Historial de encuestas (Equipo)</summary>
-  <div class="hint">Se carga desde <b>data/encuestas.json</b> (GitHub).</div>
-  <div class="panel__box" style="margin-top:10px">
-    <table class="mini" id="tblPollHistory"></table>
-  </div>
-</details>
-
-
-        </div>
-
-<div class="controls" style="margin-top:10px">
-          <label class="ctl">
-            <span class="ctl__label">Encuestas guardadas</span>
-            <select id="pollStoreSelect"></select>
-          </label>
-          <button class="btn" id="btnLoadPoll" class="btn" type="button">Cargar</button>
-          <button class="btn" id="btnSavePoll" class="btn" type="button">Guardar</button>
-          <button class="btn" id="btnDeletePoll" class="btn" type="button">Borrar</button>
-          <div class="hint" id="pollStoreHint">Se guardan en este navegador (localStorage).</div>
-        </div>
-
-
-        <div class="field__hint">Puedes ingresar dos mediciones: <b>preferencia por candidato</b> y <b>simpatía partidaria</b>. El simulador prioriza candidato, pero combina ambas según el peso.</div>
-
-        <div class="panel__subtitle" style="margin-top:10px">Preferencia por candidato</div>
-        <div class="grid2">
           <label class="field">
-            <div class="field__label">FP (candidato) %</div>
-            <input id="pollCandFP" type="number" min="0" max="100" step="0.1" value="30" />
-          </label>
-          <label class="field">
-            <div class="field__label">PRM (candidato) %</div>
-            <input id="pollCandPRM" type="number" min="0" max="100" step="0.1" value="50" />
-          </label>
-          <label class="field">
-            <div class="field__label">PLD (candidato) %</div>
-            <input id="pollCandPLD" type="number" min="0" max="100" step="0.1" value="15" />
-          </label>
-          <label class="field">
-            <div class="field__label">OTROS (candidato) %</div>
-            <input id="pollCandOTROS" type="number" min="0" max="100" step="0.1" value="5" />
-          </label>
-        </div>
-
-        <div class="panel__subtitle" style="margin-top:10px">Simpatía partidaria</div>
-        <div class="grid2">
-          <label class="field">
-            <div class="field__label">FP (partido) %</div>
-            <input id="pollPartyFP" type="number" min="0" max="100" step="0.1" value="28" />
-          </label>
-          <label class="field">
-            <div class="field__label">PRM (partido) %</div>
-            <input id="pollPartyPRM" type="number" min="0" max="100" step="0.1" value="52" />
-          </label>
-          <label class="field">
-            <div class="field__label">PLD (partido) %</div>
-            <input id="pollPartyPLD" type="number" min="0" max="100" step="0.1" value="12" />
-          </label>
-          <label class="field">
-            <div class="field__label">OTROS (partido) %</div>
-            <input id="pollPartyOTROS" type="number" min="0" max="100" step="0.1" value="8" />
-          </label>
-        </div>
-
-        <label class="field">
-          <div class="field__label">Peso de candidato (prioridad)</div>
-          <input id="pollWeightCand" type="range" min="50" max="95" value="80" />
-          <div class="field__hint">Candidato: <span id="pollWeightCandLabel">80</span>% · Partido: <span id="pollWeightPartyLabel">20</span>%</div>
-        </label>
-
-        <div class="field__hint">Se normaliza automáticamente a 100%.</div>
-
-        <div class="hr"></div>
-
-        <div class="panel__subtitle">Escenarios (presidencial)</div>
-        <div class="grid2">
-          <label class="field">
-            <div class="field__label">Nombre</div>
-            <input id="scenarioName" type="text" placeholder="Ej: Pres - Bloque opositor v1" />
-          </label>
-          <label class="field">
-            <div class="field__label">Guardados</div>
-            <select id="scenarioSelect"></select>
-          </label>
-        </div>
-        <div class="grid2">
-          <button class="btn" id="btnSaveScenario">Guardar</button>
-          <button class="btn btn--ghost" id="btnLoadScenario">Cargar</button>
-          <button class="btn btn--ghost" id="btnExportScenario">Exportar JSON</button>
-          <button class="btn btn--danger" id="btnDeleteScenario">Eliminar</button>
-        </div>
-
-        <div class="hr"></div>
-
-        <div class="panel__subtitle">Ajuste FP por provincia</div>
-        <div class="field__hint">Haz clic en el mapa para elegir provincia. Luego ajusta el swing.</div>
-
-        <div class="selected">
-          <div class="selected__name" id="selectedProvName">—</div>
-          <div class="selected__code" id="selectedProvCode">—</div>
-        </div>
-
-        <label class="field">
-          
-        <label class="field">
-          <div class="field__label">Crecimiento FP nacional (pp)</div>
-          <input id="globalFpGrowth" type="range" min="-10" max="35" step="0.5" value="0" />
-          <div class="field__hint"><span id="globalFpGrowthVal">0</span> pp (aplica a todo el país)</div>
-        </label>
-
-<div class="field__label">Swing FP (puntos porcentuales)</div>
-          <input id="fpSwing" type="range" min="-20" max="40" step="0.5" value="0" />
-          <div class="field__hint"><span id="fpSwingVal">0</span> pp</div>
-        </label>
-
-        <button class="btn" id="btnResetSwing" class="btn">Reset swings</button>
-
-        <div class="hr"></div>
-
-        <button class="btn btn--ghost" id="btnHome">Volver al inicio</button>
-
-      </div>
-    </aside>
-
-    <section class="content">
-      <section class="view is-active" id="view-home">
-        <div class="hero">
-          <div class="hero__left">
-            <div class="hero__title">Dashboard inicial</div>
-            <div class="hero__subtitle">
-              Simula escenarios por nivel electoral usando base 2020/2024, con encuestas y alianzas.
-            </div>
-
-            <div class="cards">
-              <div class="card">
-                <div class="card__kicker">Nivel</div>
-                <div class="card__title" id="cardLevel">Presidencial</div>
-                <div class="card__meta">Criterio: 50% + 1</div>
-              </div>
-              <div class="card">
-                <div class="card__kicker">Ganador</div>
-                <div class="card__title" id="cardWinner">—</div>
-                <div class="card__meta" id="cardWinnerMeta">—</div>
-              </div>
-              <div class="card">
-                <div class="card__kicker">Alianza</div>
-                <div class="card__title" id="cardAlliance">Sin alianza</div>
-                <div class="card__meta">Transfer: <span id="cardTransfer">85</span>%</div>
-              </div>
-              <div class="card">
-                <div class="card__kicker">Fuente</div>
-                <div class="card__title" id="cardSource">Base 2024</div>
-                <div class="card__meta" id="cardSourceMeta">Con swings por provincia</div>
-              </div>
-              <div class="card">
-                <div class="card__kicker">Arrastre Leg.</div>
-                <div class="card__title" id="cardArrLeg">—</div>
-                <div class="card__meta">Dip / Pres (FP)</div>
-              </div>
-              <div class="card">
-                <div class="card__kicker">Arrastre Mun.</div>
-                <div class="card__title" id="cardArrMun">—</div>
-                <div class="card__meta">Alc / Pres (FP)</div>
-              </div>
-
-            </div>
-
-            <div class="panel">
-              <div class="panel__head">
-                <div class="panel__title">Resumen ejecutivo</div>
-                <div class="panel__subtitle">Riesgos, prioridades y métricas clave (según año base y ajustes activos).</div>
-              </div>
-
-              <div class="grid2">
-                <div class="panel__box">
-                  <div class="panel__boxTitle">Presidencial (Monte Carlo)</div>
-                  <div class="kv">
-                    <div><span class="k">P(1ra vuelta)</span><span class="v" id="mcP1">—</span></div>
-                    <div><span class="k">P(2da vuelta)</span><span class="v" id="mcP2">—</span></div>
-                    <div><span class="k">P(ganar)</span><span class="v" id="mcPw">—</span></div>
-                  </div>
-                  <div class="hint" id="mcHint">—</div>
-                </div>
-
-                <div class="panel__box">
-                  <div class="panel__boxTitle">Indicador de alianza</div>
-                  <div class="kv">
-                    <div><span class="k">Impacto Pres.</span><span class="v" id="aliPresImpact">—</span></div>
-                    <div><span class="k">Impacto Dip.</span><span class="v" id="aliDipImpact">—</span></div>
-                    <div><span class="k">Impacto Alc.</span><span class="v" id="aliAlcImpact">—</span></div>
-                  </div>
-                  <div class="hint" id="aliHint">—</div>
-                </div>
-              </div>
-
-              <div class="grid2">
-                <div class="panel__box">
-                  <div class="panel__boxTitle">Arrastre (ranking provincias)</div>
-                  <table class="mini" id="tblArrProv"></table>
-                </div>
-                <div class="panel__box">
-                  <div class="panel__boxTitle">Arrastre (ranking municipios)</div>
-                  <table class="mini" id="tblArrMun"></table>
-                </div>
-              
-              <div class="panel__box" style="margin-top:14px">
-                <div class="panel__boxTitle">Exterior (Presidencial por circunscripción)</div>
-                <table class="mini" id="tblExtCirc"></table>
-                <div class="hint">Se calcula agrupando por país (Provincia) y sede OCLEE, y luego por COD_CIRC (1–3).</div>
-              </div>
-
-</div>
-
-              <div class="alert" id="dataAlerts" style="display:none"></div>
-            </div>
-
-
-            <div class="quick">
-              <button class="btn" data-go="pres">Ir a Presidencial</button>
-              <button class="btn btn--ghost" data-go="sen">Ir a Senadores</button>
-              <button class="btn btn--ghost" data-go="dip">Ir a Diputados</button>
-              <button class="btn btn--ghost" data-go="alc">Ir a Alcaldes</button>
-            </div>
-          </div>
-
-          <div class="hero__right">
-            <div class="mapwrap">
-              <div class="mapwrap__title">Mapa nacional (clic para seleccionar provincia)</div>
-              <div class="mapwrap__svg" id="mapHost"></div>
-              <div class="maplegend">
-                <span class="tag tag--fp">FP</span>
-                <span class="tag tag--prm">PRM</span>
-                <span class="tag tag--pld">PLD</span>
-                <span class="tag tag--otros">OTROS</span>
-                <span class="tag tag--coal">ALIANZA</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="block">
-          <div class="block__title">Resumen nacional (auto)</div>
-          <div class="tablewrap">
-            <table class="tbl" id="tblNational"></table>
-          </div>
-        </div>
-
-      </section>
-
-      <section class="view" id="view-pres">
-        <div class="view__title">PRESIDENCIAL</div>
-        <div class="view__hint">Regla: gana con 50% + 1. Si nadie llega, se muestra top-2.</div>
-        <div class="tablewrap">
-          <table class="tbl" id="tblPresProv"></table>
-        </div>
-      </section>
-
-      <section class="view" id="view-sen">
-        <div class="view__title">SENADORES</div>
-        <div class="view__hint">Regla: mayoría simple por provincia.</div>
-        <div class="tablewrap">
-          <table class="tbl" id="tblSenProv"></table>
-        </div>
-      </section>
-
-      <section class="view" id="view-dip">
-        <div class="view__title">DIPUTADOS</div>
-        <div class="view__hint">Método D'Hondt por circunscripción (curules editables en JS).
-        <div class="controls">
-          <label class="ctl">
-            <span class="ctl__label">Escaños Diputados</span>
-            <select id="seatsMode">
-              <option value="190">Control 2024 (190)</option>
-              <option value="170">Provisional 2028 (170)</option>
-              <option value="manual">Manual (local)</option>
+            <div class="field__label">Escenario</div>
+            <select id="scenarioSelect">
+              <option value="moderado">Moderado</option>
+              <option value="optimista">Optimista</option>
+              <option value="adverso">Adverso</option>
+              <option value="custom">Personalizado</option>
             </select>
           </label>
-          <button class="btn" id="btnEditSeats" type="button">Editar tabla (manual)</button>
-          <div class="hint" id="seatsHint">—</div>
-        </div>
-</div>
-        <div class="tablewrap">
-          <table class="tbl" id="tblDipCirc"></table>
-        </div>
-      </section>
 
-      <section class="view" id="view-alc">
-        <div class="view__title">ALCALDES</div>
-        <div class="view__hint">Regla: mayoría simple por municipio.</div>
-        <div class="tablewrap">
-          <table class="tbl" id="tblAlcMun"></table>
-        </div>
-      </section>
+          <label class="field">
+            <div class="field__label">Crecimiento FP nacional (pp)</div>
+            <input id="globalFpGrowth" type="range" min="-10" max="35" step="0.5" value="0"/>
+            <div class="field__hint"><span id="globalFpGrowthVal">+0.0 pp</span></div>
+          </label>
 
-    </section>
+          <div class="hr"></div>
+
+          <div class="panel__title">Alianzas</div>
+
+          <label class="field">
+            <div class="field__label">Tipo de alianza</div>
+            <select id="allianceType">
+              <option value="none">Sin alianza</option>
+              <option value="transfer">Transferencia a FP</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <div class="field__label">% transferencia a la boleta aliada (nacional)</div>
+            <input id="allianceTransfer" type="range" min="0" max="100" step="1" value="85"/>
+            <div class="field__hint"><span id="allianceTransferVal">85%</span></div>
+          </label>
+
+          <div class="hint" id="aliHint"></div>
+
+          <div class="hr"></div>
+
+          <details class="uiFold" open>
+            <summary>Encuestas</summary>
+            <div class="fieldRow">
+              <button class="btn" id="btnAplicarEncuestaSimple" type="button">Aplicar encuesta</button>
+              <button class="btn secondary" id="btnCompararEncuestas" type="button">Comparar</button>
+            </div>
+
+            <div class="fieldRow">
+              <button class="btn secondary" id="btnAplicarMasReciente" type="button">Aplicar más reciente</button>
+              <button class="btn secondary" id="btnGuardarEncuestaEquipo" type="button">Guardar en equipo</button>
+            </div>
+
+            <div class="panel__box">
+              <div class="panel__boxTitle">Tendencia (Equipo)</div>
+              <canvas id="pollTrend" height="120"></canvas>
+              <table class="mini" id="tblPollHistory"></table>
+            </div>
+          </details>
+
+          <details class="uiFold">
+            <summary>Objetivo de votos</summary>
+            <label class="field">
+              <div class="field__label">Meta FP % (ej: 50.1)</div>
+              <input id="targetPct" type="number" step="0.1" value="50.1"/>
+            </label>
+            <button class="btn" id="btnSolveTarget" type="button">Calcular</button>
+            <div class="hint" id="targetResult"></div>
+          </details>
+
+          <details class="uiFold">
+            <summary>Exportar / Cargar</summary>
+            <div class="fieldRow">
+              <button class="btn" id="btnExport" type="button">Exportar datos (CSV)</button>
+              <button class="btn secondary" id="btnExportRanking" type="button">Exportar ranking</button>
+            </div>
+            <div class="fieldRow">
+              <button class="btn secondary" id="btnCopyLink" type="button">Copiar link</button>
+              <button class="btn" id="btnPrintReport" type="button">PDF</button>
+              <button class="btn" id="btnMapPng" type="button">PNG mapa</button>
+            </div>
+            <div class="fieldRow">
+              <button class="btn secondary" id="btnLoadPoll" type="button">Cargar encuesta</button>
+              <button class="btn secondary" id="btnSavePoll" type="button">Guardar encuesta</button>
+            </div>
+          </details>
+
+          <div class="fieldRow">
+            <button class="btn ghost" id="btnResetSwing" type="button">Reset swings</button>
+            <button class="btn ghost" id="btnHome" type="button">Inicio</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Content -->
+      <section class="content" id="view-dashboard">
+        <section class="dashGrid">
+          <div class="card" id="cardLevel">
+            <div class="card__k">Nivel</div>
+            <div class="card__v">—</div>
+            <div class="card__s" id="cardLevelMeta">—</div>
+          </div>
+          <div class="card" id="cardWinner">
+            <div class="card__k">Ganador</div>
+            <div class="card__v">—</div>
+            <div class="card__s" id="cardWinnerMeta">—</div>
+          </div>
+          <div class="card" id="cardSource">
+            <div class="card__k">Fuente</div>
+            <div class="card__v">Base 2024</div>
+            <div class="card__s" id="cardSourceMeta">—</div>
+          </div>
+          <div class="card" id="cardAlliance">
+            <div class="card__k">Alianza</div>
+            <div class="card__v">Sin alianza</div>
+            <div class="card__s" id="cardTransfer">Transfer: 85%</div>
+          </div>
+          <div class="card" id="cardArrLeg">
+            <div class="card__k">Arrastre leg.</div>
+            <div class="card__v">—</div>
+            <div class="card__s">Prov. más débiles</div>
+          </div>
+          <div class="card" id="cardArrMun">
+            <div class="card__k">Arrastre mun.</div>
+            <div class="card__v">—</div>
+            <div class="card__s">Mun. más débiles</div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel__title">Mapa nacional</div>
+          <div class="mapWrap">
+            <div id="mapHost" class="mapHost"></div>
+          </div>
+          <div class="legend">
+            <span class="pill fp">FP</span>
+            <span class="pill prm">PRM</span>
+            <span class="pill pld">PLD</span>
+            <span class="pill otros">OTROS</span>
+            <span class="pill ali">ALIANZA</span>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel__title">Resultados y ranking</div>
+          <div class="twoCol">
+            <div class="panel__box">
+              <div class="panel__boxTitle">Nacional</div>
+              <table class="mini" id="tblNational"></table>
+              <div class="hint" id="cmpBox"></div>
+              <div class="fieldRow">
+                <button class="btn secondary" id="btnCompareAlliance" type="button">Comparar sin/con alianza</button>
+              </div>
+            </div>
+            <div class="panel__box">
+              <div class="panel__boxTitle">Ranking estratégico</div>
+              <table class="mini" id="tblRanking"></table>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel__title">Tablas por nivel</div>
+          <div class="threeCol">
+            <div class="panel__box">
+              <div class="panel__boxTitle">Presidencial por provincia</div>
+              <table class="mini" id="tblPresProv"></table>
+            </div>
+            <div class="panel__box">
+              <div class="panel__boxTitle">Senadores por provincia</div>
+              <table class="mini" id="tblSenProv"></table>
+            </div>
+            <div class="panel__box">
+              <div class="panel__boxTitle">Diputados por circ.</div>
+              <table class="mini" id="tblDipCirc"></table>
+            </div>
+          </div>
+
+          <div class="twoCol" style="margin-top:14px">
+            <div class="panel__box">
+              <div class="panel__boxTitle">Arrastre provincia</div>
+              <table class="mini" id="tblArrProv"></table>
+            </div>
+            <div class="panel__box">
+              <div class="panel__boxTitle">Arrastre municipio</div>
+              <table class="mini" id="tblArrMun"></table>
+            </div>
+          </div>
+
+          <div class="twoCol" style="margin-top:14px">
+            <div class="panel__box">
+              <div class="panel__boxTitle">Alcaldías (top)</div>
+              <table class="mini" id="tblAlcMun"></table>
+            </div>
+            <div class="panel__box">
+              <div class="panel__boxTitle">Exterior (por país)</div>
+              <table class="mini" id="tblExteriorPais"></table>
+            </div>
+          </div>
+
+          <div class="panel__box" style="margin-top:14px">
+            <div class="panel__boxTitle">Exterior (por circunscripción)</div>
+            <table class="mini" id="tblExteriorCirc"></table>
+          </div>
+        </section>
+      
+      <section class="content" id="view-presidencial" style="display:none"></section>
+
+      <section class="content" id="view-senadores" style="display:none"></section>
+
+      <section class="content" id="view-diputados" style="display:none"></section>
+
+      <section class="content" id="view-alcaldes" style="display:none"></section>
+
+</section>
+    </div>
   </main>
 
-  <footer class="footer">
-    <span>FP 2028 · Simulador técnico (demo)</span>
-    <span class="muted">Exporta escenarios para revisar fuera.</span>
-  </footer>
+  <script src="app.js?v=222" defer></script>
 
-  <script src="app.js?v=220" defer></script>
+  <script>
+    // IE tabs only control visuals (B.1/B.2/B.3). Logic stays in JS.
+    (function(){
+      const tabs = document.querySelectorAll(".ieTab");
+      const set = (key)=>{
+        tabs.forEach(t=>t.classList.toggle("isActive", t.dataset.ie===key));
+        document.body.dataset.ie = key;
+      };
+      tabs.forEach(t=>t.addEventListener("click", ()=>set(t.dataset.ie)));
+      set("b1");
+    })();
+
+    // Mobile sidebar drawer
+    (function(){
+      const btn = document.getElementById("btnMobileMenu");
+      const sidebar = document.getElementById("sidebar");
+      if(!btn || !sidebar) return;
+      btn.addEventListener("click", ()=>{
+        document.body.classList.toggle("sidebarOpen");
+      });
+      document.addEventListener("click", (e)=>{
+        if(!document.body.classList.contains("sidebarOpen")) return;
+        const inside = sidebar.contains(e.target) || btn.contains(e.target);
+        if(!inside) document.body.classList.remove("sidebarOpen");
+      });
+    })();
+  </script>
+
+<script>
+(function(){
+  // Failsafe: nunca dejar la pantalla pegada en "Cargando datos…"
+  function forceHideLoader(msg){
+    try{
+      document.body.classList.add("loaded");
+      var el = document.getElementById("dataAlerts");
+      if(el){
+        el.style.display = "block";
+        el.textContent = msg || "El simulador cargó parcialmente, pero algo falló al iniciar. Revisa que /data/base_data.json y /assets existan y vuelve a intentar.";
+      }
+    }catch(e){}
+  }
+
+  // Si en 6s no arrancó, quitar loader y mostrar diagnóstico.
+  var t = setTimeout(function(){
+    forceHideLoader("No terminó de iniciar (timeout). En GitHub Pages abre estos links: /app.js y /data/base_data.json. Si abren bien, el problema es un error interno de arranque y debe reportarse.");
+  }, 6000);
+
+  // Si hay error JS, quitar loader y mostrarlo.
+  window.addEventListener("error", function(e){
+    forceHideLoader("Error de inicio: " + (e && e.message ? e.message : "desconocido") + ". (Safari a veces bloquea cosas).");
+  });
+  window.addEventListener("unhandledrejection", function(e){
+    forceHideLoader("Error de inicio: promesa rechazada. " + (e && e.reason ? (e.reason.message || e.reason) : ""));
+  });
+
+  window.__clear_boot_watchdog = function(){ try{ clearTimeout(t); }catch(e){} };
+})();
+</script>
+
+<div id="compatLayer" style="display:none">
+<input id="level" value="dashboard"/>
+<input id="selectedProvCode" value=""/>
+<input id="selectedProvName" value=""/>
+<input id="pivotThreshold" type="number" value="50"/>
+<input id="targetFpPct" type="number" value="50"/>
+<input id="pollingEnabled" type="checkbox"/>
+<select id="rankMode"><option value="victoria">victoria</option></select>
+<input id="scenarioName" value=""/>
+<select id="seatsMode"><option value="2024">2024</option><option value="170">170</option><option value="manual">manual</option></select>
+<div id="seatsHint"></div>
+<input id="fpSwing" type="range" min="-20" max="40" step="0.5" value="0"/><span id="fpSwingVal">0</span>
+<select id="pollStoreSelect"></select><div id="pollStoreHint"></div>
+<input id="pollPartido"/><input id="pollCandidato"/><input id="pollEncuestadora"/><input id="pollFecha"/><input id="pollMOE" type="number" value="0"/><input id="pollFP" type="number" value="0"/><input id="pollPRM" type="number" value="0"/><input id="pollPLD" type="number" value="0"/><input id="pollOTROS" type="number" value="0"/>
+<input id="pollWeightCand" type="range" min="0" max="100" value="50"/><div id="pollWeightCandLabel"></div><div id="pollWeightPartyLabel"></div>
+<div id="cmpBox"><div id="cmpPres"></div><div id="cmpDip"></div><div id="cmpAlc"></div><div id="cmpDetails"></div></div>
+<div id="mcHint"></div><div id="mcP1"></div><div id="mcP2"></div><div id="mcPw"></div>
+<div id="aliPresImpact"></div><div id="aliDipImpact"></div><div id="aliAlcImpact"></div>
+<table id="tblExtCirc"></table>
+<input id="fileImportScenario" type="file" />
+<button id="btnSaveScenario" type="button"></button><button id="btnLoadScenario" type="button"></button><button id="btnDeleteScenario" type="button"></button><button id="btnDeletePoll" type="button"></button><button id="btnEditSeats" type="button"></button>
+<button id="toggleClassifier" type="button"></button>
+</div>
 </body>
 </html>
